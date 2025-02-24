@@ -1,0 +1,205 @@
+<cfquery name="q_betreuer1" datasource="#application.datasource_kmanager_2pg#">
+    select id, benutzername 
+    from passwort.login 
+    where id in (
+        SELECT betreuer_fk
+        FROM unternehmen.unternehmen
+        where betreuer_fk is not null
+        group by betreuer_fk
+    )
+    order by benutzername
+</cfquery>
+
+<cfquery name="q_betreuer2" datasource="#application.datasource_kmanager_2pg#">
+    select id, benutzername 
+    from passwort.login 
+    where id in (
+        SELECT betreuer_fk_2
+        FROM unternehmen.unternehmen
+        where betreuer_fk_2 is not null
+        group by betreuer_fk_2
+    )
+    order by benutzername
+</cfquery>
+
+<cfquery name="q_produktversionen" datasource="#application.datasource#">
+    select * from auswahl.produktversionen order by sort
+</cfquery>
+
+<cfquery name="q_login_adminrecht" datasource="#application.datasource#">
+    select admin as adminrecht
+    from login.login
+    where login = '#session.aktueller_user#'
+</cfquery>
+
+<cfoutput>
+    <html>
+        <head>
+            <meta http-equiv="Content-Type" content="text/html; charset=ISO-8859-1" />
+            <title>Anzeigendaten.de - Kunden&uuml;bersicht</title>
+            <link rel="stylesheet" href="../css/font-awesome/css/font-awesome.min.css">
+            <link rel="preconnect" href="https://fonts.googleapis.com">
+            <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+            <link href="https://fonts.googleapis.com/css2?family=Overpass:ital,wght@0,100..900;1,100..900&display=swap" rel="stylesheet">
+
+            <link href="../css/style.css" rel="stylesheet" type="text/css" />
+            <link href="../css/thickbox.css" rel="stylesheet" type="text/css" />
+            <link href="../scripts/jquery-ui-1.13.3/jquery-ui.css" rel="stylesheet"/>
+            <link href="../css/style-tablesorter.css" rel="stylesheet" type="text/css" />
+            <link rel="stylesheet" href="../css/font-awesome/css/font-awesome.min.css">
+
+            <script type="text/javascript" src="../scripts/jquery-3.7.1.min.js"></script>
+            <script src="../scripts/jquery-ui-1.13.3/jquery-ui.js"></script>
+            <script type="text/javascript" src="../scripts/jquery.ui.datepicker-es.js"></script>
+            <script type="text/javascript" src="../scripts/thickbox_neu.js"></script>
+            <script type="text/javascript" src="../scripts/jquery.tablesorter.js"></script>
+            <script type="text/javascript" src="../scripts/jquery.tablesorter.pager_aux.js"></script>
+            <script type="text/javascript" src="../scripts/tooltip.js"></script>
+
+            <script src="../scripts/main.js"></script>
+
+            <cfif isDefined('prePageLoadContent')>
+                <!-- Pre Pageload -->
+                #prePageLoadContent#
+            </cfif>
+
+            <cfif isDefined('prePageLoadContentUser')>
+                #prePageLoadContentUser#
+            </cfif>
+            <script>
+                function userInputHinweis() {
+                    var suchtypVal = document.getElementById("suchtyp")[document.getElementById("suchtyp").selectedIndex].value;
+                    if(suchtypVal === "User-ID") {
+                        document.getElementById("suche_input").placeholder ="Zahlenwert eingeben";  
+                    }
+                }
+
+                function checkUserIdValue() {
+                    if(document.getElementById("suchtyp")[document.getElementById("suchtyp").selectedIndex].value === "User-ID" && isNaN(document.getElementById("suche_input").value)) {
+                        alert("Bitte eine Zahl eingeben.");
+                    }
+                }
+            </script>
+        </head>
+        <body>
+            <!--- Kann genutzt werden, um HTML Fehler responses bspw hier via $(...).html(...) hinzuzufügen, damit alerts auch ausgelöst werden --->
+            <div id="error_container" class="invisible"></div>
+            <div class="header_grid">
+                <div class="header_grid_header_elements">
+                    <div>
+                        <a href="/zugangsverwaltung/logged_in/kunden_uebersicht.cfm"><img src="../images/logo_zugangsverwaltung.png" alt="Logo Zugangsverwaltung"></a>
+                    </div>
+                    <div>
+                        <span style="margin-right: 40px; cursor:pointer" onclick="open_aenderungsprotokoll();">Änderungsprotokolle</span>
+                        <span style="cursor:pointer" onclick="open_suchverwaltung();">User, Suchen, Markierungen</span>
+                    </div>
+                    <div>
+                        <button type="button" class="header_grid_header_buttons button_orange_outline"onclick="aufruf_dialog_exporte_fenster()">Exports und Abfragen</button>
+                        <cfif q_login_adminrecht.adminrecht eq 'true'><button type="button" class="header_grid_header_buttons button_orange" style="cursor:pointer" onclick="dialog_neuen_kunden_anlegen()">Neuen Kunden anlegen</button></cfif>
+                    </div>
+                </div>
+                <h1 id="headline" style="margin-bottom: 60px">Suche</h1>
+            </div>
+            <div class="header_suche_element_grid">
+                <div class="header_suche_element_grid_item">
+                    <div class="header_suche_element_grid_item_suche_dropdown">
+                        <select id="suchtyp" name="suchtyp" onchange="userInputHinweis()" class="customDropdownMenu" style="border-right: 15px solid transparent; padding-left: 30px; padding-right: 40px;">
+                                <option value="Kundenname" <cfif url.suchtyp eq "Kundenname">selected</cfif> >Kunde</option>
+                                <option value="Benutzername" <cfif url.suchtyp eq "Benutzername">selected</cfif> >User</option>
+                                <option value="Name" <cfif url.suchtyp eq "Name">selected</cfif> >Name</option>
+                                <option value="Email-Adresse" <cfif url.suchtyp eq "Email-Adresse">selected</cfif>>E-Mail</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="header_suche_element_grid_item" style="padding: 0">
+                    <input id="suche_input" type="text" onkeyup="(event.key === 'Enter') ? sucheAusfuehren() : undefined;" class="header_suche_element_grid_item_input" style="width:100%; outline: none; border: none; border-width: 0px; padding: 0 20px; font-weight: bold" onchange="checkUserIdValue()" value="#url.input#">
+                </div>
+                <div class="header_suche_element_grid_item">
+                    <div class="header_suche_element_grid_item_suche_dropdown">
+                        <select id="betreuer_1" name="betreuer_1" class="customDropdownMenu" style="border-right: 15px solid transparent" onchange="betreuer_suche_starten('betreuer_1')">
+                            <option value="">Betreuer1</option>
+                            <option value="-1" <cfif url.betreuer_1 eq -1>selected</cfif>>Alle</option>
+                            <cfloop query="#q_betreuer1#">
+                                <option value="#q_betreuer1.id#" <cfif url.betreuer_1 eq q_betreuer1.id>selected</cfif>>#q_betreuer1.benutzername#</option> 
+                            </cfloop>    
+                        </select>
+                    </div>
+                </div>
+                <div class="header_suche_element_grid_item">
+                    <div class="header_suche_element_grid_item_suche_dropdown">
+                        <select id="betreuer_2" name="betreuer_2" class="customDropdownMenu" style="border-right: 15px solid transparent" onchange="betreuer_suche_starten('betreuer_2')">
+                            <option value="">Betreuer2</option>
+                            <option value="-1" <cfif url.betreuer_2 eq -1>selected</cfif> >Alle</option>
+                            <cfloop query="#q_betreuer2#">
+                                <option value="#q_betreuer2.id#" <cfif url.betreuer_2 eq q_betreuer2.id>selected</cfif>>#q_betreuer2.benutzername#</option> 
+                            </cfloop>    
+                        </select>
+                    </div>
+                </div>
+                <div class="header_suche_element_grid_item">
+                    <div class="header_suche_element_grid_item_suche_dropdown">
+                        <select id="produktversion" name="produktversion" class="customDropdownMenu" style="border-right: 15px solid transparent">
+                            <option value="-1">Produktversion</option>
+                            <cfloop query="q_produktversionen">
+                                <option value="#q_produktversionen.id#" <cfif url.produktversion eq q_produktversionen.id>selected</cfif> >#q_produktversionen.name#</option>
+                            </cfloop>
+                        </select>
+                    </div>
+                </div>
+                <div class="header_suche_element_grid_item">
+                    <div class="header_suche_element_grid_item_suche_dropdown">
+                        <select id="kundenstatus" name="kundenstatus" class="customDropdownMenu" style="padding-right: 35px" style="border-right: 15px solid transparent">
+                            <option value="AlleK" <cfif url.kundenstatus eq "AlleK">selected</cfif>>Alle Kunden</option>
+                            <option value="AktivK" <cfif url.kundenstatus eq "AktivK">selected</cfif>>Aktiv</option>
+                            <option value="InaktivK" <cfif url.kundenstatus eq "InaktivK">selected</cfif>>Inaktiv</option>
+                            <option value="TestK" <cfif url.kundenstatus eq "TestK">selected</cfif>>Testkunden</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="header_suche_element_grid_item header_suche_element_lupe" onclick="sucheAusfuehren_klick()">
+                    <img src="../images/icon_lupe.png" alt="Icon Suche">
+                </div>
+            </div>
+
+            <div class="startseite_content">
+                <!---Seite initial--->
+                <div class="startseite_content_start" style="margin: auto">
+                    <img src="../images/no_search_result.png" alt="Bild Startseite" class="startseite_content_img">
+                    <p class="startseite_content_p">Einfach <b>Suchkategorie</b> auswählen<br> und <b>Name</b> eingeben um loszulegen!</p>
+                </div>
+                
+                <div class="startseite_content_suche_ergebnis schatten invisible"></div>
+                <div class="startseite_content_suche_einstellungen schatten invisible"></div>
+                <div class="startseite_platzhalter"></div>
+            </div>
+
+            <cfinclude template="dialoge_header_template.cfm">
+                     
+            <script>
+                $(document).ready(function() {  
+                    $("##input_betreuer").autocomplete({  
+                        source: "betreuer_autocomplete.cfm",
+                        //minLength: 2,
+                        select: function(event, ui) {
+
+                        }
+                    });
+
+                    $("##ziel_kundenname_user_verschieben").autocomplete({  
+                        source: "autocomplete_kundenname.cfm",
+                        //minLength: 2,
+                        select: function(event, ui) {
+                            // Funktion aufrufen, wenn ein Vorschlag ausgewählt wird
+                            //gruppen_hoelne(ui.item.value); // Übergibt den ausgewählten Wert
+
+                            $("##kundenmanager_id_user_verschieben").val("");
+                            upload_ziel_kunden(ui.item.value);
+                        }
+                    });
+                });
+
+                
+
+            </script>
+
+</cfoutput>

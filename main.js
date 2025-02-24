@@ -785,14 +785,7 @@ function generateElementHTML(elementData, type, ziel_id) {
             elementData.value = elementData.value.split(',');
         }
         
-        // var values = Array.isArray(elementData.value) ? elementData.value : [elementData.value];
-        // var spansHTML = ``;
-        
-        // spansHTML = values.map(function(value) {
-        //     return `
-        //     <label class="fliesstext_14 margin_bottom_5"><input type="checkbox" value="${value}"> ${value}</label><br>
-        //     `;
-        // }).join('');
+      
 
 
 		var values = Array.isArray(elementData.value) ? elementData.value : [];
@@ -937,7 +930,6 @@ function generateElementHTML(elementData, type, ziel_id) {
 					return `<option value="${optionObject.value}" ${selectedAttribute}>${optionObject.value}</option>`;
 				}
 				
-			// TODO sollte nochmal angepasst werden, das backend kann hier das richtige key-value pairing bereits liefern,
 			// wenn key=value sein soll kriegt man halt 2x den selben wert, andernfalls muss man immer ausnehmen definieren
 			} else if (elementData.id == '21' || elementData.id == '28' || elementData.id == '10' || elementData.id == '183' || elementData.id == '22' || elementData.id == '346' || elementData.id == '241' || elementData.id == '36' || elementData.id == '174'){//Währung und für alle ander mit fk
 				return `<option value="${optionObject.key}" ${selectedAttribute}>${optionObject.value}</option>`;
@@ -964,20 +956,6 @@ function generateElementHTML(elementData, type, ziel_id) {
 			</div>
 		`;
 
-        // elementHTML = `
-        //     <div class="container_element_2_columns">
-        //         <label for="select_${elementData.label}" class="fliesstext_14 element_schnelle_rechte_suche">${elementData.label}</label>
-        //         <div class="layout_element_speichern_select_input">
-        //             <div class="input_element input_element_select width_90">
-        //                 <select name="${elementData.src_columnname}" id="select_${elementData.label}" class="dropdown_element width_100 fliesstext_14" onchange="visuellesOnChangeFeedback(event)">
-        //                     <!-- Options would be populated dynamically here -->
-        //                     <option value="${elementData.value}">${elementData.value}</option>
-        //                 </select>
-        //             </div>
-        //             <span class="container_saved_element_text layout_flex fliesstext_14 hide"><img src="../images/icon_saved.png" alt="Icon Gespeichert"></span>
-        //         </div>
-        //     </div>
-        // `;
 
     } else if (elementData.elementType === 'select(multiple)') {//mehrere werte auswaehlen (alte zv, extra popup) 
 		if (typeof elementData.value === 'string') {
@@ -999,12 +977,7 @@ function generateElementHTML(elementData, type, ziel_id) {
 				var inputID = `id="${elementData.src_columnname}_${option.key}"`;
 				//divID = `id="${elementData.src_columnname}"`;			
 	
-			/*}else{
-				// Bestimme, ob diese Checkbox markiert sein sollte
-				var isChecked = values.includes(option.key) ? 'checked' : '';
-				var onclick = '';
-				var inputID = '';
-			}*/
+			
 
 			return `
 				<div class="container_element_2_columns">
@@ -1324,21 +1297,6 @@ function generateElementHTML(elementData, type, ziel_id) {
                 classNames = `layout_flex`;
     
             }
-            
-            //jedes element einzeln durchlaufen und dafuer ein span erstellen
-            /*spansHTML = values.map(function(value) {
-				if(value == 0) {
-					valueText = ``;
-				} else {
-					valueText = value;
-				}
-                return `
-                <label for="${value}" class="checkbox_element_container fliesstext_14 margin_bottom_5">
-                    <input type="checkbox" id="${elementData.label}_${value}" name="${elementData.src_columnname}" value="${value}" onchange="visuellesOnChangeFeedback(event)" ${elementData.value ? 'checked' : ''}>
-                    ${valueText}
-                    
-                </label>`;
-            }).join('')*/
 
 
 			var spansHTML = '';
